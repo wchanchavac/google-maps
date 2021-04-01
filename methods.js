@@ -1,3 +1,12 @@
+function getLastStep(i) {
+    let next = i + 1;
+    if (next <= steps.length) {
+        return steps[next]
+    } else {
+        return null;
+    }
+}
+
 function drawCurve(P1, P2, map) {
     let lineLength = google.maps.geometry.spherical.computeDistanceBetween(P1, P2);
     let lineHeading = google.maps.geometry.spherical.computeHeading(P1, P2);
@@ -14,21 +23,45 @@ function drawCurve(P1, P2, map) {
     let curvedLine = new GmapsCubicBezier(P1, pA, pB, P2, 0.0001, map);
 }
 
-function drawMarker({ lat, lng }, map, infoWindow, visible = true) {
-    let config = {
-            position: {
-                lat,
-                lng
-            },
-            map: map
+function drawWarningMarker({ lat, lng }, map, infoWindow) {
+    let marker = new google.maps.Marker({
+        position: {
+            lat,
+            lng
+        },
+        map: map,
+        icon: {
+            url: 'http://maps.google.com/mapfiles/kml/pushpin/red-pushpin.png',
+            scaledSize: new google.maps.Size(30,30)
+        }
+    });
+
+    if (infoWindow) {
+        marker.addListener("click", () => {
+            infoWindow.open(map, marker);
+        });
     }
 
-    if (!visible) {
-        config.icon = "historyIcon.png";
-        // config.icon = './icons8-filled-circle-32.png'
-    }
+    return marker;
+}
 
-    let marker = new google.maps.Marker(config);
+
+function drawArrowMarker({ lat, lng }, map, infoWindow, rotation) {
+    let marker = new google.maps.Marker({
+        position: {
+            lat,
+            lng
+        },
+        map: map,
+        icon: {
+            path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+            rotation: rotation,
+            fillColor: '#0000FF',
+            strokeOpacity: 0,
+            fillOpacity: 1,
+            scale: 4
+        }
+    });
 
 
     if (infoWindow) {
@@ -61,26 +94,25 @@ function parseStep(point) {
     } : null
 }
 
-function drawPolilyne(data, map, strokeOpacity = 0.7) {
-    const lineSymbol = {
-        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-        fillColor: '#0000FF',
-        fillOpacity: 1.0
-    };
-
+function drawPolilyne(data, map, strokeOpacity) {
     let poly = new google.maps.Polyline({
         path: data,
         geodesic: true,
         strokeColor: "#0000FF",
         strokeOpacity,
-        strokeWeight: 4,
-        icons: [
-            {
-                icon: lineSymbol,
-                offset: "1px",
-            },
-        ]
+        strokeWeight: 8,
     });
 
     poly.setMap(map);
+
+    return poly
+}
+
+function angle(cx, cy, ex, ey) {
+    var dy = ey - cy;
+    var dx = ex - cx;
+    var theta = Math.atan2(dy, dx); // range (-PI, PI]
+    theta *= 180 / Math.PI; // rads to degs, range (-180, 180]
+    //if (theta < 0) theta = 360 + theta; // range [0, 360)
+    return theta;
 }
